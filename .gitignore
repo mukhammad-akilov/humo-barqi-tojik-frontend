@@ -1,5 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
+.idea
+.idea/*
 # dependencies
 /node_modules
 /.pnp
@@ -14,6 +15,9 @@
 
 # production
 /build
+/build
+*.zip
+*.rar
 
 # misc
 .DS_Store
