@@ -12,8 +12,10 @@
   "dependencies": {
     "@emotion/react": "^11.5.0",
     "@emotion/styled": "^11.3.0",
+    "@mui/icons-material": "^5.0.5",
     "@mui/lab": "^5.0.0-alpha.51",
     "@mui/material": "^5.0.4",
+    "@mui/system": "^5.0.6",
     "@types/crypto-js": "^4.0.2",
     "@types/uuid": "^8.3.1",
     "classnames": "^2.3.1",
