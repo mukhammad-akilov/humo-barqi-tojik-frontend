@@ -72,9 +72,10 @@ const Header = () : JSX.Element => {
                 <Box
                    
                 >
-                  <Tooltip title={`Переключить на ${store?.themeMode === "dark" ? "светлый" : "тёмный"} режим`} arrow>
+                  <Tooltip title={`Переключить на ${store?.themeMode === "dark" ? "светлый" : "тёмный"} режим`}>
                     <MaterialUISwitch 
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => setStore && setStore({...store, themeMode: store?.themeMode ==="light" ? "dark": "light"})}
+                        checked={store?.themeMode === "dark" ? true : false}
                     />
                 </Tooltip>
                 </Box>

@@ -1,4 +1,4 @@
-import {createContext, useState, FC, useMemo} from "react";
+import {createContext, useState, FC, useMemo, useEffect} from "react";
 import { v4 as uuidv4 } from 'uuid';
 import {createTheme, PaletteMode, ThemeProvider} from "@mui/material";
 import { ruRU } from '@mui/material/locale';
@@ -46,16 +46,23 @@ export const StoreContextProvider: FC = ({children}): JSX.Element => {
                 //     contrastText: '#FFFFFF',
                 // },
               },
-            
-            //   typography: {
-            //     fontSize: 16,
-            //     body1: {
-            //       fontSize: "1rem",
-            //     }
-            //   },
         }, ruRU),[store.themeMode],
       );
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const themeMode: PaletteMode | null = localStorage.getItem("theme-mode") as PaletteMode;
+            if ((themeMode !== null) && (themeMode === "light" || themeMode === "dark")) {
+                setStore({...store, themeMode: themeMode});
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        if(store.themeMode) {
+            localStorage.setItem("theme-mode", store.themeMode);
+        }
+    }, [store.themeMode]);
 
     return <StoreContext.Provider value={{store, setStore}}>
         <ThemeProvider theme={customTheme}>

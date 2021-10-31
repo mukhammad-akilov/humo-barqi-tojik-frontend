@@ -56,7 +56,6 @@ interface IApiConfigHeaders {
     [key: string]: string
 }
 
-
 export interface IApiConfig {
     method: string;
     headers: IApiConfigHeaders;
@@ -70,6 +69,13 @@ export interface IApiConfig {
 
 export interface IApiConfigBody {
     [key: string]: string | number | undefined
+}
+
+export interface IApiErrorResponse {
+    message: string,
+    apiResponse: {
+        [key: string]: string | number | undefined
+    },
 }
 
 // Service precheck
@@ -126,3 +132,4 @@ export interface IPaymentResponse {
     reason: string,
     trans_id: number;
 }
+

@@ -1,17 +1,17 @@
 import React, { useEffect, useContext, useState} from 'react';
 import { StoreContext } from '../../store/StoreContext';
 import httpsService  from '../../utils/httpService/httpService';
-import {IBarkiTojikReposnse, IServicePreCheckResponse, IApiConfig, IServiceInfoInfo, IServiceInfoResponse, IPaymentResponse} from '../../interfaces/interfaces';
+import {IBarkiTojikReposnse, IServicePreCheckResponse, IApiConfig, 
+    IServiceInfoInfo, IServiceInfoResponse, IPaymentResponse, IApiErrorResponse} from '../../interfaces/interfaces';
 // Styles
 import styles from './Home.module.scss';
 import {Button, Container, Box, Select, SelectChangeEvent, MenuItem, Typography, Divider,
-    FormControl, InputLabel, CircularProgress, TextField, Skeleton, LinearProgress, Snackbar} from '@mui/material';
+    FormControl, InputLabel, TextField, Skeleton, LinearProgress, Snackbar} from '@mui/material';
 import MuiAlert, { AlertProps, AlertColor } from '@mui/material/Alert';
 // Icons
 import {Person, AccountBalanceWallet, Home as HomeIcon} from '@mui/icons-material';
-import { makePublicRouterInstance } from 'next/dist/client/router';
 
-const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(
+const SnackbarAlert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(
     props,
     ref,
   ) {
@@ -127,6 +127,7 @@ const Home = () : JSX.Element => {
         if(account.trim() !== "") {
             try {
                 setLoadingPreCheck(true);
+                setAccountNotFound(false);
                 const apiData = {
                     "account" : account,
                     "service_id": selectedServiceId
@@ -152,6 +153,7 @@ const Home = () : JSX.Element => {
             } catch (error) {
                 console.log(error);
                 setLoadingPreCheck(false);
+                setAccountNotFound(true);
             }
         }
     };
@@ -248,9 +250,39 @@ const Home = () : JSX.Element => {
     return (
        <section>
            <Container>
+                <Box mt={5}>
+                    <Box
+                        sx={{
+                            maxWidth:"600px",
+                            margin:"auto",
+                        }}
+                    >
+                        <Box mb={3}>
+                            <Skeleton variant="rectangular" animation="wave" height={50} />
+                        </Box>
+                        <Box mb={3}>
+                            <Skeleton variant="rectangular" animation="wave" height={50} />
+                        </Box>
+                        <Box mb={3}>
+                            <Skeleton variant="rectangular" animation="wave" height={50} />
+                        </Box>
+                        <Box mb={3}>
+                            <Skeleton variant="rectangular" animation="wave" height={150} />
+                        </Box>
+                        <Box>
+                            <Skeleton 
+                                sx={{ margin: "auto" }}
+                                variant="rectangular" 
+                                animation="wave" 
+                                height={35} 
+                                width={100} 
+                            />
+                        </Box>
+                    </Box> 
+                </Box>
                {loading ?
-                    <Box>
-                        <CircularProgress />   
+                    <Box mt={5}>
+                       
                     </Box>
                     :
                     <Box mt={5}>
@@ -299,8 +331,7 @@ const Home = () : JSX.Element => {
                                         <Skeleton animation="wave" />      
                                     </>
                                 }
-
-                                {(accountInfo && !loadingPreCheck) &&
+                                {(accountInfo && !loadingPreCheck && !accountNotFound) &&
                                     <>
                                         <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
                                             <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><Person /> ФИО:</Box> {accountInfo.info?.surname}  
@@ -312,6 +343,9 @@ const Home = () : JSX.Element => {
                                             <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><HomeIcon/> Адрес:</Box> {accountInfo.info?.address}
                                         </Typography>
                                     </>
+                                }
+                                {accountNotFound &&
+                                   <MuiAlert severity="error">Лицевой счет не найден</MuiAlert>
                                 }
                             </Box>
                             <Box mb={3}>
@@ -365,9 +399,9 @@ const Home = () : JSX.Element => {
             }
            </Container>
            <Snackbar open={snackbarMessage.open} autoHideDuration={2000} onClose={handleCloseSnackbar}>
-                <Alert onClose={handleCloseSnackbar} severity={snackbarMessage.type} sx={{ width: '100%' }}>
+                <SnackbarAlert onClose={handleCloseSnackbar} severity={snackbarMessage.type} sx={{ width: '100%' }}>
                     {snackbarMessage.message}
-                </Alert>
+                </SnackbarAlert>
             </Snackbar>
        </section>
     );
