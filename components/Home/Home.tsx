@@ -21,16 +21,23 @@ const SnackbarAlert = React.forwardRef<HTMLDivElement, AlertProps>(function Aler
 
 const Home = () : JSX.Element => {
     const {store, setStore} = useContext(StoreContext);
+     // Form validation
+     const [notValidateField, setNotValidateField] = useState<{account: boolean, amount: boolean}>({
+        account: false,
+        amount: false,
+    });
     // Account
     const [accountInfo, setAccountInfo] = useState<IServicePreCheckResponse>();
     const [account, setAccount] = useState<string>("");
     const [accountNotFound, setAccountNotFound] = useState<boolean>(false);
     // Service (Barki Tojik)
     const [selectedServiceId, setSelectedServiceId] = useState<number>();
-    const [serviceInfo, setServiceInfo] = useState<IServiceInfoInfo>();
+    const [selectedSerivePaymentInfo, setSelectedServicePaymentInfo] = useState<IServiceInfoInfo>();
+    const [selectedSerivePaymentInfoId, setSelectedServicePaymentInfoId] = useState<string>("");
+    const [servicePaymentMethods, setServicePaymentMethods] = useState<Array<IServiceInfoInfo>>([]);
     const [barkiTojikList, setBarkiTojikList] = useState<IBarkiTojikReposnse>();
     // User input data
-    const [amount, setAmount] = useState<number>(0);
+    const [amount, setAmount] = useState<string>("");
     const [userAgreement, setUserAgreement] = useState<boolean>(false);
     // Loading
     const [loading, setLoading] = useState<boolean>(false);
@@ -47,48 +54,58 @@ const Home = () : JSX.Element => {
         message: "",
     })
 
+    const handleAmountChnage = (event: React.ChangeEvent<HTMLInputElement>): void => {
+        const price = event.target.value.trim();
+        const regex = /^(0{1}|([1-9]([0-9]+)?))(\.\d{1,2})?$/gim;
+        const result = regex.test(price);
+        if(result || (price.endsWith('.') && !price.startsWith(".") && price[price.lastIndexOf(".") - 1] !== ".") || price === "") {
+            setAmount(price);
+        }
+    }
+
     const validateForm = (): boolean => {
-        const validate = (Number(amount) <= 0 || true);
+        const validate = (Number(amount) <= 0 || loadingPayment || loadingPreCheck || account === "" || accountNotFound === true);
         return validate;
     }
 
-    const validateAmount = (amount: number) => {
-        if(amount < serviceInfo!.min_sum) {
+    const validateAmount = (amount: string) => {
+        if(amount && parseFloat(amount) < selectedSerivePaymentInfo!.min_sum) {
             setSnackbarMessage({
                 open: true,
-                message: `Сумма должна быть не меньше ${serviceInfo?.min_sum} ${serviceInfo?.cur_iso}`,
+                message: `Сумма должна быть не меньше ${selectedSerivePaymentInfo?.min_sum} ${selectedSerivePaymentInfo?.cur_iso}`,
                 type: "error",
             });
-            setAmount(serviceInfo!.min_sum);
-        } else if (amount > serviceInfo!.max_sum) {
+            setAmount(selectedSerivePaymentInfo!.min_sum.toString());
+        } else if (amount && parseFloat(amount) > selectedSerivePaymentInfo!.max_sum) {
             setSnackbarMessage({
                 open: true,
-                message: `Сумма должна быть не меньше ${serviceInfo?.max_sum} ${serviceInfo?.cur_iso}`,
+                message: `Сумма должна быть не меньше ${selectedSerivePaymentInfo?.max_sum} ${selectedSerivePaymentInfo?.cur_iso}`,
                 type: "error",
             });
-            setAmount(serviceInfo!.max_sum);
+            setAmount(selectedSerivePaymentInfo!.max_sum.toString());
         }
-        
     }
 
     const calcTransferTotalPrice = () => {
         let fee: number | null = null;
-        if(serviceInfo?.take_both) {
-            fee = ((amount / 100) * serviceInfo.percentage) + serviceInfo.fixed_fee;
+        if(selectedSerivePaymentInfo?.take_both) {
+            fee = ((Number(amount) / 100) * selectedSerivePaymentInfo.percentage) + selectedSerivePaymentInfo.fixed_fee;
             setTransferFee(fee);
-        } else if(amount <= serviceInfo!.fixed_amount) {
-            fee = serviceInfo!.fixed_fee;
+        } else if(Number(amount) <= selectedSerivePaymentInfo!.fixed_amount) {
+            fee = selectedSerivePaymentInfo!.fixed_fee;
             setTransferFee(fee);
         } else {
-            fee = (amount / 100) * serviceInfo!.percentage;
+            fee = (Number(amount) / 100) * selectedSerivePaymentInfo!.percentage;
             setTransferFee(fee);
         }
 
         // Set total price and fee
         setTransferFee(fee);
-        const totalPrice = (amount - fee) * serviceInfo!.buy;
+        const totalPrice = (parseFloat(amount) - fee) * selectedSerivePaymentInfo!.buy;
         if(!isNaN(totalPrice)) {
             setTotalTransferPrice(totalPrice);
+        } else {
+            setTotalTransferPrice(0);
         }
     }
 
@@ -109,11 +126,13 @@ const Home = () : JSX.Element => {
             };
     
             const responseJson: IServiceInfoResponse = await httpsService<IServiceInfoResponse>(apiConfig);
+            setServicePaymentMethods(responseJson.info);
             for (let info of responseJson.info) {
                 if (info.card_type !== "MVM") {
                     continue;
                 }
-                setServiceInfo(info); 
+                setSelectedServicePaymentInfo(info);
+                setSelectedServicePaymentInfoId(info.card_type);
                 break;
             }
             setLoadingServiceInfo(false);
@@ -128,6 +147,7 @@ const Home = () : JSX.Element => {
             try {
                 setLoadingPreCheck(true);
                 setAccountNotFound(false);
+
                 const apiData = {
                     "account" : account,
                     "service_id": selectedServiceId
@@ -164,9 +184,9 @@ const Home = () : JSX.Element => {
             const unixTime: Number = Date.now();
            
             const apiData = {
-                "payment_method" : serviceInfo?.card_type,
+                "payment_method" : selectedSerivePaymentInfo?.card_type,
                 "account": account,
-                "amount": parseFloat(amount.toFixed(2)),
+                "amount": parseFloat(parseFloat(amount).toFixed(2)),
                 "service_id": selectedServiceId,
                 "transfer_type": "service_payment",
                 "date_for_check": unixTime.toString(),
@@ -180,15 +200,15 @@ const Home = () : JSX.Element => {
                 },
                 uuid: store?.uuid!,
                 body: JSON.stringify(apiData),
-                title: `${serviceInfo?.card_type}${account}${amount.toFixed(2)}service_payment${selectedServiceId}${unixTime}`,
+                title: `${selectedSerivePaymentInfo?.card_type}${account}${parseFloat(amount).toFixed(2)}service_payment${selectedServiceId}${unixTime}`,
                 hashKey: store?.hashKey!,
                 url: `cards/other/transfer_from_unknown`,
                 func: () => console.log("Test"),
             };
     
-            console.log("Testing", apiConfig.title, selectedServiceId);
             const responseJson: IPaymentResponse = await httpsService<IPaymentResponse>(apiConfig);
-            console.log(responseJson);            
+            // Redirect to payment website
+            window.location.href = responseJson.payment_url;
         } catch (error) {
             console.log(error);
             setLoadingPayment(false);
@@ -242,161 +262,191 @@ const Home = () : JSX.Element => {
 
     useEffect(() => {
         // Calculate transfer total price
-        if(serviceInfo) {
+        if(selectedSerivePaymentInfo) {
             calcTransferTotalPrice();
         }
-    }, [serviceInfo, amount]);
+    }, [selectedSerivePaymentInfo, amount]);
+
+    useEffect(() => {
+        if(selectedSerivePaymentInfoId) {
+            for (let info of servicePaymentMethods) {
+                if (info.card_type !== selectedSerivePaymentInfoId) {
+                    continue;
+                }
+                setSelectedServicePaymentInfo(info);
+                break;
+            }
+        }
+    }, [selectedSerivePaymentInfoId]);
 
     return (
        <section>
            <Container>
-                <Box mt={5}>
+                <Box my={5}>
+                    <Box mb={4}>
+                        <Typography variant="h4" component="h1" align="center">Оплата Барки Точик</Typography>
+                    </Box>
                     <Box
                         sx={{
                             maxWidth:"600px",
                             margin:"auto",
                         }}
                     >
-                        <Box mb={3}>
-                            <Skeleton variant="rectangular" animation="wave" height={50} />
-                        </Box>
-                        <Box mb={3}>
-                            <Skeleton variant="rectangular" animation="wave" height={50} />
-                        </Box>
-                        <Box mb={3}>
-                            <Skeleton variant="rectangular" animation="wave" height={50} />
-                        </Box>
-                        <Box mb={3}>
-                            <Skeleton variant="rectangular" animation="wave" height={150} />
-                        </Box>
-                        <Box>
-                            <Skeleton 
-                                sx={{ margin: "auto" }}
-                                variant="rectangular" 
-                                animation="wave" 
-                                height={35} 
-                                width={100} 
-                            />
-                        </Box>
-                    </Box> 
-                </Box>
-               {loading ?
-                    <Box mt={5}>
-                       
-                    </Box>
-                    :
-                    <Box mt={5}>
-                        <Box mb={4}>
-                            <Typography variant="h4" component="h1" align="center">Оплата Барки Точик</Typography>
-                        </Box>
-                        <Box
-                            sx={{
-                                maxWidth:"600px",
-                                margin:"auto",
-                            }}
-                        >
-                            <Box mb={3}>
-                                <FormControl fullWidth>
-                                    <InputLabel id="demo-simple-select-label">Город</InputLabel>
-                                    <Select
-                                        labelId="demo-simple-select-label"
-                                        id="demo-simple-select"
-                                        value={selectedServiceId?.toString()}
-                                        label="Город"
-                                        onChange={(event: SelectChangeEvent) => setSelectedServiceId(Number(event.target.value))}
+                        {loading ?
+                            <>
+                                <Box mb={3}>
+                                    <Skeleton variant="rectangular" animation="wave" height={50} />
+                                </Box>
+                                <Box mb={3}>
+                                    <Skeleton variant="rectangular" animation="wave" height={50} />
+                                </Box>
+                                <Box mb={3}>
+                                    <Skeleton variant="rectangular" animation="wave" height={50} />
+                                </Box>
+                                <Box mb={3}>
+                                    <Skeleton variant="rectangular" animation="wave" height={50} />
+                                </Box>
+                                <Box mb={3}>
+                                    <Skeleton variant="rectangular" animation="wave" height={150} />
+                                </Box>
+                                <Box>
+                                    <Skeleton 
+                                        sx={{ margin: "auto" }}
+                                        variant="rectangular" 
+                                        animation="wave" 
+                                        height={35} 
+                                        width={100} 
+                                    />
+                                </Box>
+                            </>
+                            :
+                            <>
+                                <Box mb={3}>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="demo-simple-select-label">Город</InputLabel>
+                                        <Select
+                                            labelId="demo-simple-select-label"
+                                            id="demo-simple-select"
+                                            value={selectedServiceId?.toString()}
+                                            label="Город"
+                                            onChange={(event: SelectChangeEvent) => setSelectedServiceId(Number(event.target.value))}
+                                        >
+                                            {barkiTojikList?.services_list.map(service => (
+                                                <MenuItem key={service.service_id} value={service.service_id}>{service.service_name}</MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                                <Box mb={3}>
+                                    <TextField
+                                        required={true}
+                                        fullWidth={true}
+                                        id="account"
+                                        label="Лицевой счет"
+                                        value={account}
+                                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setAccount(event.target.value)}
+                                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                                        error={notValidateField.account && account === ""}
+                                        helperText={notValidateField.account && account === "" ? "Поле обязательно для заполнения" : ""}
+                                        onBlur={(event: React.FocusEvent<HTMLInputElement>) => {servicePreCheck(event.target.value); setNotValidateField(prevState => ({...prevState, account: true}))}}
+                                        onFocus={(event: React.FocusEvent<HTMLInputElement>) => setNotValidateField(prevState => ({...prevState, account: false}))}
+                                    />
+                                </Box>
+                                <Box mb={3}>
+                                    {loadingPreCheck &&
+                                        <>
+                                            <Skeleton animation="wave" />
+                                            <Skeleton animation="wave" />
+                                            <Skeleton animation="wave" />      
+                                        </>
+                                    }
+                                    {(accountInfo && !loadingPreCheck && !accountNotFound) &&
+                                        <>
+                                            <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
+                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><Person /> ФИО:</Box> {accountInfo.info?.surname}  
+                                            </Typography>
+                                            <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
+                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><AccountBalanceWallet/> Баланс:</Box> {accountInfo.info?.balance} сомони
+                                            </Typography>
+                                            <Typography variant="subtitle1" component="div" sx={{display: "flex", gap: "5px"}}>
+                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><HomeIcon/> Адрес:</Box> {accountInfo.info?.address}
+                                            </Typography>
+                                        </>
+                                    }
+                                    {accountNotFound &&
+                                        <MuiAlert severity="error">Лицевой счет не найден</MuiAlert>
+                                    }
+                                </Box>
+                                <Box mb={3}>
+                                    <FormControl fullWidth>
+                                        <InputLabel id="payment-type-label">Способ оплаты</InputLabel>
+                                        <Select
+                                            labelId="payment-type-label"
+                                            id="payment-type-select"
+                                            value={selectedSerivePaymentInfoId}
+                                            label="Способ оплаты"
+                                            onChange={(event: SelectChangeEvent) => setSelectedServicePaymentInfoId(event.target.value)}
+                                        >
+                                            <MenuItem value="KM">Корти Милли</MenuItem>
+                                            <MenuItem value="MVM">Visa/MasterCard/Мир (РФ)</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                                <Box mb={3}>
+                                    <TextField
+                                        required={true}
+                                        fullWidth={true}
+                                        onBlur={(event: React.FocusEvent<HTMLInputElement>) => {validateAmount(event.target.value); setNotValidateField(prevState => ({...prevState, amount: true}))}}
+                                        id="amount"
+                                        label={selectedSerivePaymentInfo?.amount_label}
+                                        value={amount}
+                                        onChange={handleAmountChnage}
+                                        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                                        error={notValidateField.amount && amount === ""}
+                                        helperText={notValidateField.amount && amount === "" ? "Поле обязательно для заполнения" : ""}
+                                        onFocus={(event: React.FocusEvent<HTMLInputElement>) => setNotValidateField(prevState => ({...prevState, amount: false}))}
+                                    />
+                                </Box>
+                                {selectedSerivePaymentInfo &&
+                                    <Box 
+                                        sx={{
+                                            p: 3,
+                                            backgroundColor: theme => theme.palette.primary.main,
+                                            color: theme => theme.palette.background.default,
+                                            borderRadius: "4px"
+                                        }}
+                                        mb={3}
                                     >
-                                        {barkiTojikList?.services_list.map(service => (
-                                            <MenuItem key={service.service_id} value={service.service_id}>{service.service_name}</MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Box>
-                            <Box mb={3}>
-                                <TextField
-                                    required={true}
-                                    fullWidth={true}
-                                    onBlur={(event: React.FocusEvent<HTMLInputElement>) => servicePreCheck(event.target.value)}
-                                    id="account"
-                                    label="Лицевой счет"
-                                    value={account}
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setAccount(event.target.value)}
-                                    inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
-                                />
-                            </Box>
-                            <Box mb={3}>
-                                {loadingPreCheck &&
-                                    <>
-                                        <Skeleton animation="wave" />
-                                        <Skeleton animation="wave" />
-                                        <Skeleton animation="wave" />      
-                                    </>
-                                }
-                                {(accountInfo && !loadingPreCheck && !accountNotFound) &&
-                                    <>
-                                        <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
-                                            <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><Person /> ФИО:</Box> {accountInfo.info?.surname}  
+                                        {selectedSerivePaymentInfoId === "MVM" &&
+                                            <Typography variant="subtitle1" gutterBottom component="div">
+                                                <Box component="span">Курс:</Box> 1 {selectedSerivePaymentInfo.cur_iso} = {selectedSerivePaymentInfo.buy} {selectedSerivePaymentInfo.to_cur_iso}
+                                            </Typography>
+                                        }
+                                        <Typography variant="subtitle1" component="div">
+                                            <Box component="span">Комиссия: {transferFee.toLocaleString()} {selectedSerivePaymentInfo.cur_iso}</Box> 
                                         </Typography>
-                                        <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
-                                            <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><AccountBalanceWallet/> Баланс:</Box> {accountInfo.info?.balance} сомони
+                                        <Box my={1}>
+                                            <Divider />
+                                        </Box>
+                                        <Typography variant="subtitle1" component="div">
+                                            <Box component="span" sx={{fontWeight: 700}}>Сумма к зачислению:</Box> {totalTransferPrice < 0 ? Number("0").toFixed(2) : totalTransferPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} {selectedSerivePaymentInfo.to_cur_iso}
                                         </Typography>
-                                        <Typography variant="subtitle1" component="div" sx={{display: "flex", gap: "5px"}}>
-                                            <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><HomeIcon/> Адрес:</Box> {accountInfo.info?.address}
-                                        </Typography>
-                                    </>
-                                }
-                                {accountNotFound &&
-                                   <MuiAlert severity="error">Лицевой счет не найден</MuiAlert>
-                                }
-                            </Box>
-                            <Box mb={3}>
-                                <TextField
-                                    required={true}
-                                    fullWidth={true}
-                                    onBlur={(event: React.FocusEvent<HTMLInputElement>) => validateAmount(Number(event.target.value))}
-                                    id="amount"
-                                    label={serviceInfo?.amount_label}
-                                    value={amount}
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setAmount(Number(event.target.value))}
-                                    inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
-                                />
-                            </Box>
-                            {serviceInfo &&
-                                <Box 
-                                    sx={{
-                                        p: 3,
-                                        backgroundColor: theme => theme.palette.primary.main,
-                                        color: theme => theme.palette.background.default,
-                                        borderRadius: "4px"
-                                    }}
-                                    mb={3}
-                                >
-                                    <Typography variant="subtitle1" gutterBottom component="div">
-                                        <Box component="span">Курс:</Box> 1 {serviceInfo.cur_iso} = {serviceInfo.buy} {serviceInfo.to_cur_iso}
-                                    </Typography>
-                                    <Typography variant="subtitle1" component="div">
-                                        <Box component="span">Комиссия: {transferFee} {serviceInfo.cur_iso}</Box> 
-                                    </Typography>
-                                    <Box my={1}>
-                                        <Divider />
                                     </Box>
-                                    <Typography variant="subtitle1" component="div">
-                                        <Box component="span" sx={{fontWeight: 700}}>Сумма к зачислению:</Box> {totalTransferPrice < 0 ? Number("0").toFixed(2) : totalTransferPrice.toFixed(2)} {serviceInfo.to_cur_iso}
-                                    </Typography>
+                                }
+                                {loadingPayment &&
+                                    <Box mb={2}>
+                                        <LinearProgress />
+                                    </Box>
+                                }
+                                <Box textAlign="center">
+                                    <Button variant="contained" disabled={validateForm()} onClick={handlePaymentSubmit}>
+                                        Оплатить
+                                    </Button>
                                 </Box>
-                            }
-                            {loadingPayment &&
-                                <Box mb={2}>
-                                    <LinearProgress />
-                                </Box>
-                            }
-                            <Box textAlign="center">
-                                <Button variant="contained" disabled={loadingPayment} onClick={handlePaymentSubmit}>
-                                    Оплатить
-                                </Button>
-                            </Box>
-                        </Box>
+                            </>
+                        }
                     </Box>
-            }
+                </Box>
            </Container>
            <Snackbar open={snackbarMessage.open} autoHideDuration={2000} onClose={handleCloseSnackbar}>
                 <SnackbarAlert onClose={handleCloseSnackbar} severity={snackbarMessage.type} sx={{ width: '100%' }}>

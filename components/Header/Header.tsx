@@ -56,7 +56,12 @@ const Header = () : JSX.Element => {
     const {store, setStore} = useContext(StoreContext);
 
     return (
-        <Box component="header">
+        <Box 
+          component="header"
+          sx={{
+            borderBottom: (theme) => `1px solid ${theme.palette.mode === 'dark' ? theme.palette.primary.main : '#EAEEF3'}`,
+          }}
+        >
             <Container>
               <Box 
                 sx={{
@@ -69,9 +74,7 @@ const Header = () : JSX.Element => {
                 <Box>
                   <img src="/images/humo-logo.svg" alt="МДО Хумо" className={styles.logo} />
                 </Box>
-                <Box
-                   
-                >
+                <Box>
                   <Tooltip title={`Переключить на ${store?.themeMode === "dark" ? "светлый" : "тёмный"} режим`}>
                     <MaterialUISwitch 
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => setStore && setStore({...store, themeMode: store?.themeMode ==="light" ? "dark": "light"})}

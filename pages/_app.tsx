@@ -21,13 +21,13 @@ const  MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
           <meta name="theme-color" content="#FF6600" />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no" />
           <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
-          <meta name="description" content="Карта Орзу - Карта от МДО Хумо"/>
-          <meta property="og:locale" content="en_US" />
+          <meta name="description" content="Оплата Барки Точик -  МДО Хумо"/>
+          <meta property="og:locale" content="ru_RU" />
           <meta property="og:type" content="website" />
-          <meta property="og:title" content="Карта Орзу  - Карта от МДО Хумо" />
-          <meta property="og:description" content="Карта Орзу  - Карта от МДО Хумо" />
-          <meta property="og:url" content="https://orzu.humo.tj" />
-          <meta property="og:site_name" content="Карта Орзу - Карта от МДО Хумо" />
+          <meta property="og:title" content="Оплата Барки Точик -  МДО Хумо" />
+          <meta property="og:description" content="Оплата Барки Точик -  МДО Хумо" />
+          <meta property="og:url" content="https://bark.humo.tj" />
+          <meta property="og:site_name" content="Оплата Барки Точик -  МДО Хумо" />
           <meta property="og:image" content="/images/share.png" />
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />

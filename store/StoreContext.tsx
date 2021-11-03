@@ -2,6 +2,8 @@ import {createContext, useState, FC, useMemo, useEffect} from "react";
 import { v4 as uuidv4 } from 'uuid';
 import {createTheme, PaletteMode, ThemeProvider} from "@mui/material";
 import { ruRU } from '@mui/material/locale';
+import useMediaQuery from '@mui/material/useMediaQuery';
+
 
 interface ICaptcha {
     show: boolean;
@@ -30,6 +32,10 @@ const defaultStore: IStoreContext = {
 export const StoreContext = createContext<IStoreContext>(defaultStore);
 
 export const StoreContextProvider: FC = ({children}): JSX.Element => {
+    const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+
+    defaultStore.themeMode = prefersDarkMode ? "dark" : "light";
+
     const [store, setStore] = useState<IStoreContext>(defaultStore);
 
     const customTheme = useMemo(
