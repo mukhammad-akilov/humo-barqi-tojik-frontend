@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { StoreContext } from '../../store/StoreContext';
 // Styles
 import styles from './Header.module.scss';
-import {Container, Switch, styled, Box} from '@mui/material';
+import {Container, Switch, styled, Box, useTheme} from '@mui/material';
 import Tooltip from '../Tooltip/Tooltip';
 
 const MaterialUISwitch = styled(Switch)(({ theme }) => ({
@@ -54,12 +54,13 @@ const MaterialUISwitch = styled(Switch)(({ theme }) => ({
 
 const Header = () : JSX.Element => {
     const {store, setStore} = useContext(StoreContext);
+    const theme = useTheme();
 
     return (
         <Box 
           component="header"
           sx={{
-            borderBottom: (theme) => `1px solid ${theme.palette.mode === 'dark' ? theme.palette.primary.main : '#EAEEF3'}`,
+            borderBottom: (theme) => `1px solid ${theme.palette.mode === 'dark' ? theme.palette.divider : '#EAEEF3'}`,
           }}
         >
             <Container>
@@ -72,7 +73,7 @@ const Header = () : JSX.Element => {
                 }}
               >
                 <Box>
-                  <img src="/images/humo-logo.svg" alt="МДО Хумо" className={styles.logo} />
+                  <img src={`/images/${theme.palette.mode === 'dark' ? "humo-white-logo.svg" : "humo-logo.svg"}`} alt="МДО Хумо" className={styles.logo} />
                 </Box>
                 <Box>
                   <Tooltip title={`Переключить на ${store?.themeMode === "dark" ? "светлый" : "тёмный"} режим`}>

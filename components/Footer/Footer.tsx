@@ -7,7 +7,7 @@ const Footer = () : JSX.Element => {
             component="footer"
             sx={{
                 marginTop: "auto",
-                borderTop: (theme) => `1px solid ${theme.palette.mode === 'dark' ? theme.palette.primary.main : '#EAEEF3'}`,
+                borderTop: (theme) => `1px solid ${theme.palette.mode === 'dark' ? theme.palette.divider : '#EAEEF3'}`,
                 padding: "15px 0",
             }}
         >
