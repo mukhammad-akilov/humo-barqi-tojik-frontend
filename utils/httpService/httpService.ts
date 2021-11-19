@@ -20,6 +20,7 @@ const httpsService = async <T>(apiConfig: IApiConfig): Promise<T> => {
             {"method": apiConfig.method, "headers": apiConfig.headers, "body": apiConfig.body}
         );
         const responseJson : T = await response.json();
+        
         if(response.ok) {
             return responseJson;
         } else {
@@ -30,7 +31,6 @@ const httpsService = async <T>(apiConfig: IApiConfig): Promise<T> => {
 
             throw error;
         }
-       
     } catch (error) {
         console.log(error);
         throw error;

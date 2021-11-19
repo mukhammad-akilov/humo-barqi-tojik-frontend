@@ -67,6 +67,28 @@ export const StoreContextProvider: FC = ({children}): JSX.Element => {
     useEffect(() => {
         if(store.themeMode) {
             localStorage.setItem("theme-mode", store.themeMode);
+            // Custom event for Android application
+            console.log(`mobile-theme-changed:${store.themeMode}`);
+            
+            // Set theme color attrubute to change URL bar background color
+            if(store.themeMode === "dark" && typeof window !== 'undefined') {
+                // Check if theme color tag exists
+                if(document.querySelector(`meta[name="theme-color"]`)) {
+                    // Exits, so change color
+                    document.querySelector(`meta[name="theme-color"]`)!.setAttribute('content',  '#121212');
+                } else {
+                    // Not exists, so create
+                    const metaColorTag:HTMLMetaElement = document.createElement("meta");
+                    metaColorTag.setAttribute('name', 'theme-color');
+                    metaColorTag.content = "#121212";
+                    document.getElementsByTagName('head')[0].appendChild(metaColorTag);
+                    
+                }
+            } else {
+                if(document.querySelector(`meta[name="theme-color"]`)) { 
+                    document.querySelector(`meta[name="theme-color"]`)!.remove()
+                }
+            }
         }
     }, [store.themeMode]);
 

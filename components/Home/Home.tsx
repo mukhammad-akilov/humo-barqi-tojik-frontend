@@ -1,15 +1,26 @@
 import React, { useEffect, useContext, useState} from 'react';
 import { StoreContext } from '../../store/StoreContext';
+import dynamic from 'next/dynamic'
 import httpsService  from '../../utils/httpService/httpService';
+import { normalizePhoneNumber } from '../../utils/utils';
 import {IBarkiTojikReposnse, IServicePreCheckResponse, IApiConfig, 
     IServiceInfoInfo, IServiceInfoResponse, IPaymentResponse, IApiErrorResponse} from '../../interfaces/interfaces';
 // Styles
 import styles from './Home.module.scss';
 import {Button, Container, Box, Select, SelectChangeEvent, MenuItem, Typography, Divider,
-    FormControl, InputLabel, TextField, Skeleton, LinearProgress, Snackbar} from '@mui/material';
+    FormControl, InputLabel, TextField, Skeleton, LinearProgress, Snackbar, InputAdornment, IconButton} from '@mui/material';
 import MuiAlert, { AlertProps, AlertColor } from '@mui/material/Alert';
+
+// Dynamic load input mask (non SSR)
+const InputMask  = dynamic(
+    () => import('../MaskedInput/MaskedInput'),
+    { ssr: false }
+  )
 // Icons
-import {Person, AccountBalanceWallet, Home as HomeIcon} from '@mui/icons-material';
+import {Person,  Receipt, Home as HomeIcon, Help as HelpIcon} from '@mui/icons-material';
+
+// Modals
+import ReceiptModal from './modals/ReceiptModal/ReceiptModal';
 
 const SnackbarAlert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(
     props,
@@ -22,9 +33,10 @@ const SnackbarAlert = React.forwardRef<HTMLDivElement, AlertProps>(function Aler
 const Home = () : JSX.Element => {
     const {store, setStore} = useContext(StoreContext);
      // Form validation
-     const [notValidateField, setNotValidateField] = useState<{account: boolean, amount: boolean}>({
+     const [notValidateField, setNotValidateField] = useState<{account: boolean, amount: boolean, phoneNumber: boolean}>({
         account: false,
         amount: false,
+        phoneNumber: false,
     });
     // Account
     const [accountInfo, setAccountInfo] = useState<IServicePreCheckResponse>();
@@ -39,6 +51,7 @@ const Home = () : JSX.Element => {
     // User input data
     const [amount, setAmount] = useState<string>("");
     const [userAgreement, setUserAgreement] = useState<boolean>(false);
+    const [phoneNumber, setPhoneNumber] = useState<string>("");
     // Loading
     const [loading, setLoading] = useState<boolean>(false);
     const [loadingServiceInfo, setLoadingServiceInfo] = useState<boolean>(false);
@@ -48,11 +61,14 @@ const Home = () : JSX.Element => {
     const [transferFee, setTransferFee] = useState<number>(0);
     const [totalTransferPrice, setTotalTransferPrice] = useState<number>(0);
 
+    // Snackbar
     const [snackbarMessage, setSnackbarMessage] = useState<{open: boolean, type: AlertColor | undefined, message: string}>({
         open: false,
         type: "success",
         message: "",
     })
+    // Modals
+    const [openReceiptModal, setOpenReceiptModal] = useState<boolean>(false);
 
     const handleAmountChnage = (event: React.ChangeEvent<HTMLInputElement>): void => {
         const price = event.target.value.trim();
@@ -128,7 +144,7 @@ const Home = () : JSX.Element => {
             const responseJson: IServiceInfoResponse = await httpsService<IServiceInfoResponse>(apiConfig);
             setServicePaymentMethods(responseJson.info);
             for (let info of responseJson.info) {
-                if (info.card_type !== "MVM") {
+                if (info.card_type !== "WEB_KM") {
                     continue;
                 }
                 setSelectedServicePaymentInfo(info);
@@ -190,8 +206,9 @@ const Home = () : JSX.Element => {
                 "service_id": selectedServiceId,
                 "transfer_type": "service_payment",
                 "date_for_check": unixTime.toString(),
+                "phone": normalizePhoneNumber(phoneNumber)
             };
-
+            
             const apiConfig: IApiConfig = {
                 method: "POST",
                 headers: {
@@ -200,7 +217,7 @@ const Home = () : JSX.Element => {
                 },
                 uuid: store?.uuid!,
                 body: JSON.stringify(apiData),
-                title: `${selectedSerivePaymentInfo?.card_type}${account}${parseFloat(amount).toFixed(2)}service_payment${selectedServiceId}${unixTime}`,
+                title: `${selectedSerivePaymentInfo?.card_type}${account}${parseFloat(amount).toFixed(2)}service_payment${selectedServiceId}${unixTime}${normalizePhoneNumber(phoneNumber)}`,
                 hashKey: store?.hashKey!,
                 url: `cards/other/transfer_from_unknown`,
                 func: () => console.log("Test"),
@@ -346,6 +363,18 @@ const Home = () : JSX.Element => {
                                         value={account}
                                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => setAccount(event.target.value)}
                                         inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+                                        InputProps={{
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        onClick={() => setOpenReceiptModal(true)}
+                                                        edge="end"
+                                                    >
+                                                        <HelpIcon />
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ) 
+                                        }}
                                         error={notValidateField.account && account === ""}
                                         helperText={notValidateField.account && account === "" ? "Поле обязательно для заполнения" : ""}
                                         onBlur={(event: React.FocusEvent<HTMLInputElement>) => {servicePreCheck(event.target.value); setNotValidateField(prevState => ({...prevState, account: true}))}}
@@ -363,13 +392,15 @@ const Home = () : JSX.Element => {
                                     {(accountInfo && !loadingPreCheck && !accountNotFound) &&
                                         <>
                                             <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
-                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><Person /> ФИО:</Box> {accountInfo.info?.surname}  
+                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex",  gap: "3px"}}><Person /> ФИО:</Box> {accountInfo.info?.surname}  
                                             </Typography>
                                             <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
-                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><AccountBalanceWallet/> Баланс:</Box> {accountInfo.info?.balance} сомони
+                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex",  gap: "3px"}}>
+                                                    <Receipt /> {parseFloat(accountInfo.info?.balance) >= 0 ? "Предоплата" : "Задолженность"}:
+                                                </Box> {accountInfo.info?.balance} сомони
                                             </Typography>
                                             <Typography variant="subtitle1" component="div" sx={{display: "flex", gap: "5px"}}>
-                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "3px"}}><HomeIcon/> Адрес:</Box> {accountInfo.info?.address}
+                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex",  gap: "3px"}}><HomeIcon/> Адрес:</Box> {accountInfo.info?.address}
                                             </Typography>
                                         </>
                                     }
@@ -387,7 +418,7 @@ const Home = () : JSX.Element => {
                                             label="Способ оплаты"
                                             onChange={(event: SelectChangeEvent) => setSelectedServicePaymentInfoId(event.target.value)}
                                         >
-                                            <MenuItem value="KM">Корти Милли</MenuItem>
+                                            <MenuItem value="WEB_KM">Корти Милли</MenuItem>
                                             <MenuItem value="MVM">Visa/MasterCard/Мир (РФ)</MenuItem>
                                         </Select>
                                     </FormControl>
@@ -407,6 +438,19 @@ const Home = () : JSX.Element => {
                                         onFocus={(event: React.FocusEvent<HTMLInputElement>) => setNotValidateField(prevState => ({...prevState, amount: false}))}
                                     />
                                 </Box>
+                                {selectedSerivePaymentInfoId === "WEB_KM" &&
+                                     <Box mb={3}>
+                                        <InputMask 
+                                            mask="99-999-99-99" 
+                                            value={phoneNumber} 
+                                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPhoneNumber(event.target.value)}
+                                            error={notValidateField.phoneNumber && (phoneNumber === "" || normalizePhoneNumber(phoneNumber).length !== 9)}
+                                            helperText={notValidateField.phoneNumber && phoneNumber === "" ? "Поле обязательно для заполнения" : ""}
+                                            // onFocus={(event: React.FocusEvent<HTMLInputElement>) => setNotValidateField(prevState => ({...prevState, phoneNumber: false}))}
+                                            // onBlur={(event: React.FocusEvent<HTMLInputElement>) => {setNotValidateField(prevState => ({...prevState, phoneNumber: true}))}}
+                                        />
+                                    </Box>
+                                }
                                 {selectedSerivePaymentInfo &&
                                     <Box 
                                         sx={{
@@ -440,7 +484,7 @@ const Home = () : JSX.Element => {
                                 }
                                 <Box textAlign="center">
                                     <Button variant="contained" disabled={validateForm()} onClick={handlePaymentSubmit}>
-                                        Оплатить
+                                        Продолжить
                                     </Button>
                                 </Box>
                             </>
@@ -453,6 +497,7 @@ const Home = () : JSX.Element => {
                     {snackbarMessage.message}
                 </SnackbarAlert>
             </Snackbar>
+            <ReceiptModal open={openReceiptModal} onClose={() => setOpenReceiptModal(false)} />
        </section>
     );
 };
