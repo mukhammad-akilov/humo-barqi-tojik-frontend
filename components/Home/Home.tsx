@@ -80,8 +80,24 @@ const Home = () : JSX.Element => {
     }
 
     const validateForm = (): boolean => {
-        const validate = (Number(amount) <= 0 || loadingPayment || loadingPreCheck || account === "" || accountNotFound === true);
+        const validate = (Number(amount) <= 0 || loadingPayment || loadingPreCheck || account === "" || accountNotFound === true 
+        || (selectedSerivePaymentInfoId === "WEB_KM" && (phoneNumber === "" || normalizePhoneNumber(phoneNumber).length !== 9)));
         return validate;
+    }
+
+
+    const phoneNumberFieldHelperText = (): string => {
+        let helperText: string = "";
+
+       if (notValidateField.phoneNumber && phoneNumber === "") {
+            helperText = "Поле обязательно для заполнения";
+       } else if (notValidateField.phoneNumber && normalizePhoneNumber(phoneNumber).length !== 9) {
+            helperText = "Введите правильный номер телефона";
+       } else {
+           helperText = "";
+       }
+
+       return helperText;
     }
 
     const validateAmount = (amount: string) => {
@@ -445,9 +461,9 @@ const Home = () : JSX.Element => {
                                             value={phoneNumber} 
                                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPhoneNumber(event.target.value)}
                                             error={notValidateField.phoneNumber && (phoneNumber === "" || normalizePhoneNumber(phoneNumber).length !== 9)}
-                                            helperText={notValidateField.phoneNumber && phoneNumber === "" ? "Поле обязательно для заполнения" : ""}
-                                            // onFocus={(event: React.FocusEvent<HTMLInputElement>) => setNotValidateField(prevState => ({...prevState, phoneNumber: false}))}
-                                            // onBlur={(event: React.FocusEvent<HTMLInputElement>) => {setNotValidateField(prevState => ({...prevState, phoneNumber: true}))}}
+                                            helperText={phoneNumberFieldHelperText()}
+                                            onFocus={(event: React.FocusEvent<HTMLInputElement>) => setNotValidateField(prevState => ({...prevState, phoneNumber: false}))}
+                                            onBlur={(event: React.FocusEvent<HTMLInputElement>) => {setNotValidateField(prevState => ({...prevState, phoneNumber: true}))}}
                                         />
                                     </Box>
                                 }

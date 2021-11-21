@@ -12,8 +12,8 @@ const MaskedInput = ({mask, onChange, onBlur, onFocus, value, error, helperText,
                     mask={mask} 
                     onChange={onChange} 
                     value={value} 
-                    // onBlur={onBlur}
-                    // onFocus={onFocus}
+                    onBlur={onBlur}
+                    onFocus={onFocus}
                     maskPlaceholder=""
                 >
                     <TextField
@@ -21,8 +21,6 @@ const MaskedInput = ({mask, onChange, onBlur, onFocus, value, error, helperText,
                         fullWidth={true}
                         id="phone-number"
                         label="Номер телефона"
-                        value={value}
-                        onChange={onChange}
                         inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
                         InputProps={{
                             startAdornment: <InputAdornment position="start">(+992)</InputAdornment>,
