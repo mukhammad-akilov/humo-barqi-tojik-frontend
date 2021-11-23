@@ -84,7 +84,9 @@ export interface IServicePreCheckResponse {
         surname: string;
         address: string;
         balance: string;
-        date?: string;
+        date: string;
+        present: string;
+        previous: string;
         info?: string;
     };
 }

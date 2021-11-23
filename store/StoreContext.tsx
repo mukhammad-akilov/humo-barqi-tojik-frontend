@@ -7,7 +7,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 interface ICaptcha {
     show: boolean;
-    function?: () => void;
+    function?: (captchaCode: string) => void;
     image?: string;
 }
 

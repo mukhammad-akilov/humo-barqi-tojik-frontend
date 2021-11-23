@@ -9,7 +9,7 @@ import {IBarkiTojikReposnse, IServicePreCheckResponse, IApiConfig,
 import styles from './Home.module.scss';
 import {Button, Container, Box, Select, SelectChangeEvent, MenuItem, Typography, Divider,
     FormControl, InputLabel, TextField, Skeleton, LinearProgress, Snackbar, InputAdornment, IconButton} from '@mui/material';
-import MuiAlert, { AlertProps, AlertColor } from '@mui/material/Alert';
+import MuiAlert, { AlertProps, AlertColor} from '@mui/material/Alert';
 
 // Dynamic load input mask (non SSR)
 const InputMask  = dynamic(
@@ -17,7 +17,7 @@ const InputMask  = dynamic(
     { ssr: false }
   )
 // Icons
-import {Person,  Receipt, Home as HomeIcon, Help as HelpIcon} from '@mui/icons-material';
+import {Person,  Receipt, Home as HomeIcon, Help as HelpIcon, GraphicEq, Event} from '@mui/icons-material';
 
 // Modals
 import ReceiptModal from './modals/ReceiptModal/ReceiptModal';
@@ -174,7 +174,7 @@ const Home = () : JSX.Element => {
         }
     }
 
-    const servicePreCheck = async (account: string): Promise<void> => {
+    const servicePreCheck = async (captchaCode: string = ""): Promise<void> => {
         if(account.trim() !== "") {
             try {
                 setLoadingPreCheck(true);
@@ -199,13 +199,47 @@ const Home = () : JSX.Element => {
                     func: () => console.log("Test"),
                 };
         
+                if (captchaCode) {
+                    apiConfig.headers["verification_code"] = captchaCode;
+                }
+                
                 const responseJson: IServicePreCheckResponse = await httpsService<IServicePreCheckResponse>(apiConfig);
                 setAccountInfo(responseJson);
                 setLoadingPreCheck(false);
-            } catch (error) {
+                // Close captcha modal
+                setStore && setStore({
+                    ...store,
+                    captcha: {
+                        show: false,
+                        image: "",
+                        ...store?.captcha
+                    }
+                });
+            } catch (error: any) {
                 console.log(error);
                 setLoadingPreCheck(false);
-                setAccountNotFound(true);
+                // Set captcha settings
+                if(error.apiResponseStatusCode === 429 && setStore) {
+                    setStore({
+                        ...store,
+                        captcha : {
+                            show: true,
+                            function: servicePreCheck,
+                            image: error.apiResponse,
+                        }
+                    })   
+                } else {
+                    setAccountNotFound(true);
+                     // Close captcha modal
+                    setStore && setStore({
+                        ...store,
+                        captcha: {
+                            show: false,
+                            image: "",
+                            ...store?.captcha
+                        }
+                    });
+                }
             }
         }
     };
@@ -288,7 +322,7 @@ const Home = () : JSX.Element => {
 
     useEffect(() => {
         if(selectedServiceId) {
-            servicePreCheck(account);
+            servicePreCheck();
             getServiceInfo(selectedServiceId);
         }
     }, [selectedServiceId]);
@@ -402,7 +436,10 @@ const Home = () : JSX.Element => {
                                         <>
                                             <Skeleton animation="wave" />
                                             <Skeleton animation="wave" />
-                                            <Skeleton animation="wave" />      
+                                            <Skeleton animation="wave" /> 
+                                            <Skeleton animation="wave" />
+                                            <Skeleton animation="wave" />
+                                            <Skeleton animation="wave" />          
                                         </>
                                     }
                                     {(accountInfo && !loadingPreCheck && !accountNotFound) &&
@@ -415,8 +452,17 @@ const Home = () : JSX.Element => {
                                                     <Receipt /> {parseFloat(accountInfo.info?.balance) >= 0 ? "Предоплата" : "Задолженность"}:
                                                 </Box> {accountInfo.info?.balance} сомони
                                             </Typography>
-                                            <Typography variant="subtitle1" component="div" sx={{display: "flex", gap: "5px"}}>
+                                            <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
                                                 <Box component="span" sx={{fontWeight: 700, display: "inline-flex",  gap: "3px"}}><HomeIcon/> Адрес:</Box> {accountInfo.info?.address}
+                                            </Typography>
+                                            <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
+                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex",  gap: "3px"}}><GraphicEq /> Предыдущий показатель:</Box> {accountInfo.info?.previous}
+                                            </Typography>
+                                            <Typography variant="subtitle1" gutterBottom component="div" sx={{display: "flex", gap: "5px"}}>
+                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex",  gap: "3px"}}><GraphicEq /> Текущий показатель:</Box> {accountInfo.info?.present}
+                                            </Typography>
+                                            <Typography variant="subtitle1" component="div" sx={{display: "flex", gap: "5px"}}>
+                                                <Box component="span" sx={{fontWeight: 700, display: "inline-flex",  gap: "3px"}}><Event/> Дата:</Box> {accountInfo.info?.date}
                                             </Typography>
                                         </>
                                     }

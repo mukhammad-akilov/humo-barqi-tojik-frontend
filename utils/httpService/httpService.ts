@@ -19,14 +19,39 @@ const httpsService = async <T>(apiConfig: IApiConfig): Promise<T> => {
             `${process.env.NEXT_PUBLIC_API_URL}${apiConfig.url}`, 
             {"method": apiConfig.method, "headers": apiConfig.headers, "body": apiConfig.body}
         );
-        const responseJson : T = await response.json();
+
+        let isImage = false;
+        let captchaUrl = "";
+        let responseJson: T | undefined = undefined;
+        // let responseJson: T;
+
+
+        if(response.headers.get("Content-Type") === "image/png") {
+            const blobFile = await response.blob();
+            captchaUrl = window.URL.createObjectURL(blobFile);
+            isImage = true;
+        } else {
+            responseJson = await response.json();
+        }
         
         if(response.ok) {
-            return responseJson;
+            if(responseJson) {
+                return responseJson;
+            } else {
+                const error = {
+                    message: "Ошибка во время получения данных",
+                };
+                throw error;
+            }
+            // return responseJson;
+            // if(responseJson) {
+            //     return responseJson;
+            // }
         } else {
             const error = {
                 message: "Возникла ошибка во время запроса на сервер",
-                apiResponse: responseJson
+                apiResponseStatusCode: response.status,
+                apiResponse: isImage ? captchaUrl : responseJson,
             };
 
             throw error;
