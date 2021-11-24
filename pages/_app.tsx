@@ -36,6 +36,17 @@ const  MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
           <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
           <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#5bbad5" />
           <meta name="msapplication-TileColor" content="#da532c" />
+          <script async src="https://www.googletagmanager.com/gtag/js?id=G-69Q6Q3REW4"></script>
+          <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', 'G-69Q6Q3REW4');
+                `,
+              }}
+          />
         </Head>
         <StoreContextProvider>
           <Layout>

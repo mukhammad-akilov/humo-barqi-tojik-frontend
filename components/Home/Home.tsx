@@ -141,7 +141,7 @@ const Home = () : JSX.Element => {
         }
     }
 
-    const getServiceInfo = async(serviceId: number): Promise<void> => {
+    const getServiceInfo = async(): Promise<void> => {
         try {
             setLoadingServiceInfo(true);
            
@@ -153,7 +153,7 @@ const Home = () : JSX.Element => {
                 uuid: store?.uuid!,
                 title: `get_service_info`,
                 hashKey: store?.hashKey!,
-                url: `service/get_service_info/${serviceId}`,
+                url: `service/get_service_info/${selectedServiceId}`,
                 func: () => console.log("Test"),
             };
     
@@ -300,7 +300,14 @@ const Home = () : JSX.Element => {
                 };
         
                 const responseJson: IBarkiTojikReposnse = await httpsService<IBarkiTojikReposnse>(apiConfig);
-                setSelectedServiceId(responseJson.services_list[responseJson.default_index].service_id);
+                // Check if service exists in LocalStorage
+                const localStorageService = localStorage.getItem("selected-service");
+                if(localStorageService) {
+                    const localStorageServiceJson = JSON.parse(localStorageService);
+                    setSelectedServiceId(localStorageServiceJson.id);
+                } else {
+                    setSelectedServiceId(responseJson.services_list[responseJson.default_index].service_id);
+                }
                 setBarkiTojikList(responseJson);
                 setLoading(false);   
             } catch (error) {
@@ -322,8 +329,13 @@ const Home = () : JSX.Element => {
 
     useEffect(() => {
         if(selectedServiceId) {
+            console.log("Testing", selectedServiceId);
             servicePreCheck();
-            getServiceInfo(selectedServiceId);
+            getServiceInfo();
+            // Save selected service id to LocalStorage
+            localStorage.setItem("selected-service", JSON.stringify({
+                id: selectedServiceId
+              }));
         }
     }, [selectedServiceId]);
 
@@ -372,6 +384,9 @@ const Home = () : JSX.Element => {
                                 </Box>
                                 <Box mb={3}>
                                     <Skeleton variant="rectangular" animation="wave" height={50} />
+                                </Box>
+                                <Box mb={3}>
+                                    <Skeleton variant="rectangular" animation="wave" height={150} />
                                 </Box>
                                 <Box mb={3}>
                                     <Skeleton variant="rectangular" animation="wave" height={150} />
@@ -482,6 +497,7 @@ const Home = () : JSX.Element => {
                                         >
                                             <MenuItem value="WEB_KM">Корти Милли</MenuItem>
                                             <MenuItem value="MVM">Visa/MasterCard/Мир (РФ)</MenuItem>
+                                            <MenuItem value="HALYK">Visa/MasterCard(СНГ)</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </Box>

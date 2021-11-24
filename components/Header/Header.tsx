@@ -73,7 +73,7 @@ const Header = () : JSX.Element => {
                 }}
               >
                 <Box>
-                  <img src={`/images/${theme.palette.mode === 'dark' ? "humo-white-logo.svg" : "humo-logo.svg"}`} alt="МДО Хумо" className={styles.logo} />
+                  <img src={`/images/${theme.palette.mode === 'dark' ? "bark-white-logo.svg" : "bark-logo.svg"}`} alt="Оплата Барки Точик" className={styles.logo} />
                 </Box>
                 <Box>
                   <Tooltip title={`Переключить на ${store?.themeMode === "dark" ? "светлый" : "тёмный"} режим`}>
