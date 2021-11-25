@@ -8,7 +8,7 @@ import {IBarkiTojikReposnse, IServicePreCheckResponse, IApiConfig,
 // Styles
 import styles from './Home.module.scss';
 import {Button, Container, Box, Select, SelectChangeEvent, MenuItem, Typography, Divider,
-    FormControl, InputLabel, TextField, Skeleton, LinearProgress, Snackbar, InputAdornment, IconButton} from '@mui/material';
+    FormControl, InputLabel, TextField, Skeleton, LinearProgress, Snackbar, InputAdornment, IconButton, Link} from '@mui/material';
 import MuiAlert, { AlertProps, AlertColor} from '@mui/material/Alert';
 
 // Dynamic load input mask (non SSR)
@@ -18,6 +18,8 @@ const InputMask  = dynamic(
   )
 // Icons
 import {Person,  Receipt, Home as HomeIcon, Help as HelpIcon, GraphicEq, Event} from '@mui/icons-material';
+
+import VerifiedLogos from '../VerifiedLogos/VerifiedLogos';
 
 // Modals
 import ReceiptModal from './modals/ReceiptModal/ReceiptModal';
@@ -391,7 +393,7 @@ const Home = () : JSX.Element => {
                                 <Box mb={3}>
                                     <Skeleton variant="rectangular" animation="wave" height={150} />
                                 </Box>
-                                <Box>
+                                <Box mb={3}>
                                     <Skeleton 
                                         sx={{ margin: "auto" }}
                                         variant="rectangular" 
@@ -399,6 +401,9 @@ const Home = () : JSX.Element => {
                                         height={35} 
                                         width={100} 
                                     />
+                                </Box>
+                                <Box mb={3}>
+                                    <Skeleton variant="rectangular" animation="wave" />
                                 </Box>
                             </>
                             :
@@ -560,13 +565,19 @@ const Home = () : JSX.Element => {
                                         <LinearProgress />
                                     </Box>
                                 }
-                                <Box textAlign="center">
+                                <Box textAlign="center" mb={3}>
                                     <Button variant="contained" disabled={validateForm()} onClick={handlePaymentSubmit}>
                                         Продолжить
                                     </Button>
                                 </Box>
+                                <Box>
+                                    <Typography variant="body1" textAlign="center">
+                                        Нажимая кнопку "Продолжить", вы соглашаетесь с правилами и условиями <Link href="https://humo.tj/upload/iblock/dc2/dc26594eebfa8d5b5b6a68e4f1bd3c73.pdf" target="_blank">публичной оферты</Link>.
+                                    </Typography>
+                                </Box>
                             </>
                         }
+                        <VerifiedLogos />
                     </Box>
                 </Box>
            </Container>

@@ -1,7 +1,9 @@
 // Styles
-import {Container, Box, Typography, Link} from '@mui/material';
+import {Container, Box, Typography, useTheme} from '@mui/material';
 
 const Footer = () : JSX.Element => {
+    const theme = useTheme();
+
     return (
         <Box
             component="footer"
@@ -16,6 +18,7 @@ const Footer = () : JSX.Element => {
                   sx={{
                     display: "grid",
                     columnGap: "15px",
+                    alignItems: "center",
                     rowGap: "25px",
                     '@media (min-width: 768px)': {
                         gridTemplateColumns: "2fr 1fr",
@@ -24,42 +27,29 @@ const Footer = () : JSX.Element => {
                 >
                     <Box>
                         <Typography variant="h6" gutterBottom component="h3">
-                            О нас
+                            О сервисе
                         </Typography>
                         <p>
-                            Прогрессивная и одна из лидирующих микрофинансовых организаций в Таджикистане,
-                            предоставляющая банковские услуги более 100 тысячам клиентов.
+                            Оплачивайте за электричество Барки Точик с помощью таких банковских карт как Корти Милли, Visa, MasterCard и Мир быстро и безопасно.
                         </p>
                         <p className="mb-0">
-                            734061, г. Душанбе, ул. Н. Карабаева, 148/1.
+                            Оплата Барки Точик {new Date().getFullYear()}. Все права защищены.
                         </p>
                     </Box>
                     <Box>
-                        <Typography variant="h6" gutterBottom component="h3">
-                            Мы в соц. сетях
-                        </Typography>
-                        <Box mb={2} sx={{display: "flex", columnGap: "5px"}}>
-                            <a href="https://ru-ru.facebook.com/mdohumo/" target="_blank" rel="noreferrer">
-                                <img src="/icons/facebook.svg" alt="МДО Хумо"/>
-                            </a>
-                            <a href="https://instagram.com/humo.tj" target="_blank" rel="noreferrer">
-                                <img src="/icons/instagram.svg" alt="МДО Хумо"/>
-                            </a>
-                            <a href="https://t.me/Humomdo" target="_blank" rel="noreferrer">
-                                <img src="/icons/telegram.svg" alt="МДО Хумо"/>
-                            </a>
-                            <a href="https://ru-ru.facebook.com/mdohumo/" target="_blank" rel="noreferrer">
-                                <img src="/icons/imo.svg" alt="МДО Хумо"/>
-                            </a>
-                            <a href="https://ru-ru.facebook.com/mdohumo/" target="_blank" rel="noreferrer">
-                                <img src="/icons/whats-app.svg" alt="МДО Хумо"/>
-                            </a>
-                            <a href="https://ru-ru.facebook.com/mdohumo/" target="_blank" rel="noreferrer">
-                                <img src="/icons/viber.svg" alt="МДО Хумо"/>
-                            </a>
-                        </Box>
                         <Box>
-                            <Link href="tel:+992446405544">Тел: (+992) 44 640 55 44</Link>
+                            <Box 
+                                component="img" 
+                                src={`/images/${theme.palette.mode === 'dark' ? "bark-white-logo.svg" : "bark-logo.svg"}`} 
+                                alt="Оплата Барки Точик" 
+                                sx={{
+                                    width: "180px",
+                                    margin: "auto",
+                                    '@media (min-width: 768px)': {
+                                        marginLeft: "auto"
+                                    },
+                                }}    
+                        />
                         </Box>
                     </Box>
                 </Box>
