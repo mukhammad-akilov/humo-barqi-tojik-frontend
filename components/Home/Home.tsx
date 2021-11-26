@@ -570,7 +570,7 @@ const Home = () : JSX.Element => {
                                         Продолжить
                                     </Button>
                                 </Box>
-                                <Box>
+                                <Box mb={3}>
                                     <Typography variant="body1" textAlign="center">
                                         Нажимая кнопку "Продолжить", вы соглашаетесь с правилами и условиями <Link href="https://humo.tj/upload/iblock/dc2/dc26594eebfa8d5b5b6a68e4f1bd3c73.pdf" target="_blank">публичной оферты</Link>.
                                     </Typography>

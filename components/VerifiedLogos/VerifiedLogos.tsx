@@ -1,6 +1,8 @@
-import {Box} from '@mui/material';
+import {Box, useTheme} from '@mui/material';
 
 const VerifiedLogos = () : JSX.Element => {
+    const theme = useTheme();
+
     return (
         // <Box sx={
         //     {
@@ -36,7 +38,7 @@ const VerifiedLogos = () : JSX.Element => {
         //     />
         // </Box>
         <Box>
-            <Box component="img" src="/images/verified-payments.svg" alt="Методы оплаты" />
+            <Box component="img" src={`/images/${theme.palette.mode === 'dark' ? "verified-payments-black.svg" : "verified-payments.svg"}`} alt="Методы оплаты" />
         </Box>
     );
 };
