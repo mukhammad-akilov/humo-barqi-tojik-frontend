@@ -502,7 +502,7 @@ const Home = () : JSX.Element => {
                                         >
                                             <MenuItem value="WEB_KM">Корти Милли</MenuItem>
                                             <MenuItem value="MVM">Visa/MasterCard/Мир (РФ)</MenuItem>
-                                            <MenuItem value="HALYK">Visa/MasterCard(СНГ)</MenuItem>
+                                            <MenuItem value="HALYK">Visa/MasterCard (СНГ)</MenuItem>
                                         </Select>
                                     </FormControl>
                                 </Box>
